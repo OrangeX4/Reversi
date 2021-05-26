@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Button, Space, Radio, Typography } from 'antd'
 import Board from './board'
-import { countPiece, copy2dArray } from '../utils'
+import { countPiece, copy2dArray, download } from '../utils'
 const { Text } = Typography
 
 let history = [] as number[][][]
@@ -31,6 +31,10 @@ function PlayersGame() {
         history = []
         historyForNewest = []
         historyForReversal = []
+        setNewest([-1, -1])
+        setReversal([])
+        setCurrentPiece(1)
+        setEndCount(0)
         setBoard([
             [0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -60,6 +64,8 @@ function PlayersGame() {
             if (_reversal) {
                 setReversal(_reversal)
             }
+            setEndCount(0)
+            setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
         }
     }
 
@@ -68,8 +74,17 @@ function PlayersGame() {
         history.push(board)
         historyForNewest.push(newest)
         historyForReversal.push(reversal)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [board])
+
+    function downloadData() {
+        download(JSON.stringify({
+            first: '1',
+            history: history,
+            newest: historyForNewest,
+            reversal: historyForReversal
+        }))
+    }
 
 
     return (
@@ -80,6 +95,9 @@ function PlayersGame() {
                 </Button>
                 <Button onClick={recall} size="large" style={{ minWidth: 80 }}>
                     悔棋
+                </Button>
+                <Button onClick={downloadData} size="large" style={{ minWidth: 80 }}>
+                    保存对局数据
                 </Button>
                 <Radio.Group defaultValue="black" value={currentPiece === 1 ? "black" : "white"} size="large">
                     <Radio.Button value="black" style={{ minWidth: 80 }}>{`⚫ ${countPiece(board, 1)}`}</Radio.Button>

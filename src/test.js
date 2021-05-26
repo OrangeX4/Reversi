@@ -1,17 +1,9 @@
-export function isIn(piece: number[], pieces: number[][]) {
-    let result = false
-    for (let i = 0; i < pieces.length; i++) {
-        if (piece[0] === pieces[i][0] && piece[1] === pieces[i][1]) {
-            result = true
-            break
-        }
-    }
-    return result
-}
-
-export function getPrompt(board: number[][], current: number): number[][] {
+function getPrompt(board, current) {
     // 对于一个方向是否可以放置, 比如向右边是 dy = 0, dx = 1 的情况
-    function isFeasibleByStep(i: number, j: number, dy: number, dx: number) {
+    function isFeasibleByStep(i, j, dy, dx) {
+        if (i === 0 && j === 0 && dx === 1 && dy === 1) {
+            console.log('break')
+        }
         let isFeasible = false
         let isEnd = false
         while (true) {
@@ -32,7 +24,7 @@ export function getPrompt(board: number[][], current: number): number[][] {
     }
 
     // 八个不同的方向是否可行
-    function isFeasible(i: number, j: number) {
+    function isFeasible(i, j) {
         return isFeasibleByStep(i, j, -1, -1)
             || isFeasibleByStep(i, j, -1, 0)
             || isFeasibleByStep(i, j, -1, 1)
@@ -43,7 +35,7 @@ export function getPrompt(board: number[][], current: number): number[][] {
             || isFeasibleByStep(i, j, 1, 1)
     }
 
-    const result = [] as number[][]
+    const result = []
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             if (board[i][j] === 0 && isFeasible(i, j)) {
@@ -55,13 +47,9 @@ export function getPrompt(board: number[][], current: number): number[][] {
     return result
 }
 
-export interface PromptDict {
-    [piece: string]: number[][]
-}
-
-export function getPromptDict(board: number[][], current: number) {
+function getPromptDict(board, current) {
     // 对于一个方向是否可以放置, 比如向右边是 dy = 0, dx = 1 的情况
-    function getFeasibleByStep(i: number, j: number, dy: number, dx: number) {
+    function getFeasibleByStep(i, j, dy, dx) {
         let result = []
         let isEnd = false
         while (true) {
@@ -82,8 +70,8 @@ export function getPromptDict(board: number[][], current: number) {
     }
 
     // 八个不同的方向是否可行
-    function getFeasible(i: number, j: number) {
-        let result = [] as number[][]
+    function getFeasible(i, j) {
+        let result = []
         result = result.concat(getFeasibleByStep(i, j, -1, -1))
         result = result.concat(getFeasibleByStep(i, j, -1, 0))
         result = result.concat(getFeasibleByStep(i, j, -1, 1))
@@ -91,11 +79,11 @@ export function getPromptDict(board: number[][], current: number) {
         result = result.concat(getFeasibleByStep(i, j, 0, 1))
         result = result.concat(getFeasibleByStep(i, j, 1, -1))
         result = result.concat(getFeasibleByStep(i, j, 1, 0))
-        result = result.concat(getFeasibleByStep(i, j, 1, 1))
+        result = result.concat(getFeasibleByStep(i, j, 1, -1))
         return result
     }
 
-    const result = { list: [] } as PromptDict
+    const result = { list: [] }
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             const list = getFeasible(i, j)
@@ -108,38 +96,15 @@ export function getPromptDict(board: number[][], current: number) {
     return result
 }
 
-export function countPiece(board: number[][], piece: number) {
-    let count = 0
-    board.forEach((line) => line.forEach((item) => {
-        if (item === piece) {
-            count++
-        }
-    }))
-    return count
-}
+console.log(
+    getPrompt([[0, 0, 2, 2, 2, 2, 2, 0],
+    [2, 1, 1, 1, 1, 2, 0, 0],
+    [2, 1, 1, 2, 2, 1, 1, 2],
+    [2, 2, 2, 1, 2, 2, 1, 2],
+    [2, 2, 2, 2, 1, 1, 2, 2],
+    [2, 2, 2, 2, 1, 1, 1, 2],
+    [0, 0, 2, 2, 2, 1, 1, 1],
+    [0, 0, 2, 2, 2, 2, 2, 2]], 2)
+)
 
-export function copy2dArray(arr: number[][]): number[][] {
-    let re = []
-    for (let i = 0; i < arr.length; i++) {
-        let [...arr1] = arr[i]
-        re.push(arr1)
-    }
-    return re
-}
-
-export function download(str: string) {
-    var elementA = document.createElement('a')
-
-    // 文件的名称为时间戳加文件名后缀
-    elementA.download = + new Date() + ".json"
-    elementA.style.display = 'none'
-
-    // 生成一个blob二进制数据，内容为json数据
-    var blob = new Blob([str])
-
-    //生成一个指向blob的URL地址，并赋值给a标签的href属性
-    elementA.href = URL.createObjectURL(blob)
-    document.body.appendChild(elementA)
-    elementA.click()
-    document.body.removeChild(elementA)
-} 
+console.log('end')

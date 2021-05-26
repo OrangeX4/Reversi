@@ -60,6 +60,7 @@
 }
 
 .newest:before,
+.predict:before,
 .reversal:before {
     content: "";
     display: block;
@@ -76,6 +77,10 @@
 
 .reversal:before {
     background: #66c;
+}
+
+.predict:before {
+    background: #00ffff;
 }
 
 .prompt {

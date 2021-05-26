@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { isIn, getPromptDict } from '../utils'
 import '../css/board.css'
 
@@ -11,11 +12,14 @@ interface Props {
 }
 
 function Board(props: Props) {
+    // 可翻转预测
+    const [predictReversal, setPredictReversal] = useState([] as number[][])
 
     // Get class of piece
     function getClass(i: number, j: number) {
         return (props.reversal && isIn([i, j], props.reversal) ? 'reversal' : '')
             + ' ' + (props.newest && i === props.newest[0] && j === props.newest[1] ? 'newest' : '')
+            + ' ' + (predictReversal && isIn([i, j], predictReversal) ? 'predict' : '')
     }
 
     const prompt = getPromptDict(props.board, props.current)
@@ -29,6 +33,18 @@ function Board(props: Props) {
     function handleClick(i: number, j: number) {
         if (isIn([i, j], prompt.list) && props.onClickPrompt) {
             props.onClickPrompt([i, j], prompt[[i, j].toString()])
+        }
+    }
+
+    function handleMouseEnter(i: number, j: number) {
+        if (isIn([i, j], prompt.list)) {
+            setPredictReversal(prompt[[i, j].toString()])
+        }
+    }
+
+    function handleMouseLeave() {
+        if (predictReversal.length > 0) {
+            setPredictReversal([])
         }
     }
 
@@ -50,7 +66,10 @@ function Board(props: Props) {
                         )
                     default:
                         return (
-                            <td className={"bg" + (i + j) % 2} key={j} onClick={() => handleClick(i, j)}>
+                            <td className={"bg" + (i + j) % 2} key={j}
+                                onMouseEnter={() => handleMouseEnter(i, j)}
+                                onMouseLeave={handleMouseLeave}
+                                onClick={() => handleClick(i, j)}>
                                 <div className={isIn([i, j], prompt.list) ? 'prompt' : ''}></div>
                             </td>
                         )
