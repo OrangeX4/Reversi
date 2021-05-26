@@ -1,77 +1,60 @@
-import { Layout, Menu, Typography, Button, Space, Select, Radio } from 'antd'
+import { useState } from 'react'
+import { Layout, Menu, Typography } from 'antd'
 import { UploadOutlined, UserOutlined, VideoCameraOutlined } from '@ant-design/icons'
-import Board from './component/board'
+import PlayersGame from './component/playersGame'
+import PlayerAiGame from './component/playerAiGame'
 import 'antd/dist/antd.css'
 import './css/App.css'
 
 const { Header, Content, Sider } = Layout
-const { Title, Paragraph } = Typography
-const { Option } = Select
+const { Title } = Typography
 
-const board = [
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 2, 1, 0, 0, 0],
-    [0, 0, 0, 1, 2, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-]
+const gameMap = ['双人对战', '人机对战', '联机对战', 'AI 对战', '说明']
 
 function App() {
+    const [currentGame, setCurrentGame] = useState(0)
+
     return (
         <Layout className="layout">
             <Sider breakpoint="lg" collapsedWidth="0">
-                <div className="logo" />
+                <div className="logo">⚫<span style={{color: 'black'}}>黑</span><span style={{color: 'white'}}>⚪白</span>⚫棋⚪</div>
                 <Menu theme="dark" mode="inline" defaultSelectedKeys={['0']}>
-                    <Menu.Item key="0" icon={<UserOutlined />}>
-                        人机对战
+                    <Menu.Item key="0" onClick={() => { setCurrentGame(0) }} icon={<VideoCameraOutlined />}>
+                        {gameMap[0]}
                     </Menu.Item>
-                    <Menu.Item key="1" icon={<VideoCameraOutlined />}>
-                        双人对战
+                    <Menu.Item key="1" onClick={() => { setCurrentGame(1) }} icon={<UserOutlined />}>
+                        {gameMap[1]}
                     </Menu.Item>
-                    <Menu.Item key="2" icon={<UploadOutlined />}>
-                        AI 对战
+                    <Menu.Item key="2" onClick={() => { setCurrentGame(2) }} icon={<VideoCameraOutlined />}>
+                        {gameMap[2]}
                     </Menu.Item>
-                    <Menu.Item key="3" icon={<UserOutlined />}>
-                        说明
+                    <Menu.Item key="3" onClick={() => { setCurrentGame(3) }} icon={<UploadOutlined />}>
+                        {gameMap[3]}
+                    </Menu.Item>
+                    <Menu.Item key="4" onClick={() => { setCurrentGame(4) }} icon={<UserOutlined />}>
+                        {gameMap[4]}
                     </Menu.Item>
                 </Menu>
             </Sider>
             <Layout>
                 <Header className="site-layout-sub-header-background" style={{ padding: 16 }}>
-                    <Title level={4}>人机对战</Title>
+                    <Title level={4}>{gameMap[currentGame]}</Title>
                 </Header>
                 <Content style={{ margin: '24px 16px 0' }}>
-                    <div className="site-layout-background" style={{ padding: 24 }}>
-                        <Space size="large" wrap style={{ paddingBottom: 24 }}>
-                            <Button size="large" style={{ minWidth: 80 }}>
-                                开始
-                            </Button>
-                            <Button size="large" style={{ minWidth: 80 }}>
-                                悔棋
-                            </Button>
-                            <Radio.Group defaultValue="player" size="large">
-                                <Radio.Button value="player" style={{ minWidth: 96 }}>玩家先走</Radio.Button>
-                                <Radio.Button value="ai" style={{ minWidth: 96 }}>AI 先走</Radio.Button>
-                            </Radio.Group>
-                            <Select defaultValue="0" size="large" style={{ width: 120 }} onChange={(value) => console.log(`selected ${value}`)}>
-                                <Option value="0">小迷糊</Option>
-                                <Option value="1">贪心鬼</Option>
-                            </Select>
-                            <Radio.Group defaultValue="black" value="black" size="large">
-                                <Radio.Button value="black" style={{ minWidth: 80 }}>⚫ 0</Radio.Button>
-                                <Radio.Button value="white" style={{ minWidth: 80 }}>⚪ 0</Radio.Button>
-                            </Radio.Group>
-                        </Space>
-                        <br />
-                        <br />
-                        <Paragraph>
-                            小迷糊什么都不知道, 所以他只会在可以下的地方随便下一个棋子.
-                        </Paragraph>
-                        <Board board={board} current={1} reversal={[[4, 4]]} newest={[3, 4]} />
-                    </div>
+                    {(() => {
+                        switch (currentGame) {
+                            case 0:
+                                return <PlayersGame />
+                            case 1:
+                                return <PlayerAiGame />
+                            case 2:
+                                return <p>建设中</p>
+                            case 3:
+                                return <p>建设中</p>
+                            case 4:
+                                return <p>建设中</p>
+                        }
+                    })()}
                 </Content>
             </Layout>
         </Layout>

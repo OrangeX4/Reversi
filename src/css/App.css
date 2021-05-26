@@ -2,6 +2,10 @@
     height: 32px;
     margin: 16px;
     background: rgba(255, 255, 255, 0.2);
+    padding-top: 2px;
+    padding-left: 16px;
+    font-weight: bolder;
+    font-size: 16px;
 }
 
 .site-layout-sub-header-background {
