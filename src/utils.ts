@@ -95,7 +95,7 @@ export function getPromptDict(board: number[][], current: number) {
         return result
     }
 
-    const result = {list: []} as PromptDict
+    const result = { list: [] } as PromptDict
     for (let i = 0; i < 8; i++) {
         for (let j = 0; j < 8; j++) {
             const list = getFeasible(i, j)
@@ -108,4 +108,21 @@ export function getPromptDict(board: number[][], current: number) {
     return result
 }
 
+export function countPiece(board: number[][], piece: number) {
+    let count = 0
+    board.forEach((line) => line.forEach((item) => {
+        if (item === piece) {
+            count++
+        }
+    }))
+    return count
+}
 
+export function copy2dArray(arr: number[][]): number[][] {
+    let re = []
+    for (let i = 0; i < arr.length; i++) {
+        let [...arr1] = arr[i]
+        re.push(arr1)
+    }
+    return re
+}
