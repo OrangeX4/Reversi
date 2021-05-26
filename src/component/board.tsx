@@ -33,6 +33,9 @@ function Board(props: Props) {
     function handleClick(i: number, j: number) {
         if (isIn([i, j], prompt.list) && props.onClickPrompt) {
             props.onClickPrompt([i, j], prompt[[i, j].toString()])
+            if (predictReversal.length > 0) {
+                setPredictReversal([])
+            }
         }
     }
 
