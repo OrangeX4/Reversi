@@ -3,6 +3,7 @@ import { Layout, Menu, Typography } from 'antd'
 import { UploadOutlined, UserOutlined, VideoCameraOutlined } from '@ant-design/icons'
 import PlayersGame from './component/playersGame'
 import PlayerAiGame from './component/playerAiGame'
+import About from './component/about'
 import 'antd/dist/antd.css'
 import './css/App.css'
 
@@ -52,7 +53,7 @@ function App() {
                             case 3:
                                 return <p>建设中</p>
                             case 4:
-                                return <p>建设中</p>
+                                return <About />
                         }
                     })()}
                 </Content>

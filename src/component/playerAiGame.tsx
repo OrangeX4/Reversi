@@ -159,7 +159,7 @@ function PlayerAiGame() {
     }
 
     function recall() {
-        if (history.length > 1) {
+        if (history.length > 2) {
             history.pop()
             history.pop()
             const _board = history.pop()
