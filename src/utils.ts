@@ -142,4 +142,27 @@ export function download(str: string) {
     document.body.appendChild(elementA)
     elementA.click()
     document.body.removeChild(elementA)
-} 
+}
+
+// XSS 对应
+export function escapeHtml(value: string) {
+    if (typeof value !== 'string') {
+        return value
+    }
+    return value.replace(/[&<>`"'/]/g, function (result) {
+        const escapeMap = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '`': '&#x60;',
+            '"': '&quot;',
+            "'": '&#x27;',
+            '/': '&#x2f;',
+        } as { [key: string]: string }
+        if (escapeMap[result]) {
+            return escapeMap[result]
+        } else {
+            return ''
+        }
+    })
+}
