@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Typography, Button, Space, Select, Radio } from 'antd'
 import Board from './board'
-import { countPiece, copy2dArray, download, getPromptDict, aiMapForJs, aiMapForPython, initBoard } from '../utils'
+import { countPiece, copy2dArray, download, getPromptDict, aiMapForJs, aiMapForPython, initBoard, runPythonAi } from '../utils'
 
 const { Paragraph, Text } = Typography
 const { Option } = Select
@@ -48,12 +48,22 @@ function AiAiGame() {
                 return
             }
             // AI 选择
-            aiMapForJs[currentPiece === 1 ? firstAiIndex : secondAiIndex]
-                .fn(board, currentPiece, newest, reversal, prompt, (_newest) => {
+            const aiIndex = currentPiece === 1 ? firstAiIndex : secondAiIndex
+            if (aiIndex < 0) {
+                // 对 JS 的 AI
+                aiMapForJs[-aiIndex - 1].fn(board, currentPiece, newest, reversal, prompt, (_newest) => {
                     if (prompt) {
                         updateBoard(_newest, prompt[_newest.toString()])
                     }
                 })
+            } else {
+                // 对 Python 的 AI
+                runPythonAi(aiIndex, board, currentPiece, newest, reversal, prompt, (_newest) => {
+                    if (prompt) {
+                        updateBoard(_newest, prompt[_newest.toString()])
+                    }
+                })
+            }
         }, delay)
     }
 
@@ -151,10 +161,10 @@ function AiAiGame() {
             <br />
             <br />
             <Paragraph>
-                {firstAiIndex < 0 ? aiMapForJs[-firstAiIndex-1].description : aiMapForPython[firstAiIndex].description}
+                {firstAiIndex < 0 ? aiMapForJs[-firstAiIndex - 1].description : aiMapForPython[firstAiIndex].description}
             </Paragraph>
             <Paragraph>
-                {secondAiIndex < 0 ? aiMapForJs[-secondAiIndex-1].description : aiMapForPython[secondAiIndex].description}
+                {secondAiIndex < 0 ? aiMapForJs[-secondAiIndex - 1].description : aiMapForPython[secondAiIndex].description}
             </Paragraph>
             <Board board={board} current={currentPiece} reversal={reversal} newest={newest}
                 isEnd={endCount >= 2} />

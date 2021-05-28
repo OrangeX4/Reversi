@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Typography, Button, Space, Select, Radio } from 'antd'
 import Board from './board'
-import { countPiece, copy2dArray, download, getPromptDict, PromptDict, aiMapForJs, aiMapForPython, initBoard } from '../utils'
+import { countPiece, copy2dArray, download, getPromptDict, PromptDict, aiMapForJs, aiMapForPython, initBoard, runPythonAi } from '../utils'
 
 const { Paragraph, Text } = Typography
 const { Option } = Select
@@ -62,7 +62,13 @@ function PlayerAiGame() {
                 })
             } else {
                 // 对 Python 的 AI
-                alert('python')
+                runPythonAi(aiIndex, board, currentPiece, newest, reversal, prompt, (_newest) => {
+                    if (prompt) {
+                        updateBoard(_newest, prompt[_newest.toString()])
+                        setIsAiRunning(false)
+                        setLastOne(lastOne === 1 ? 2 : 1)
+                    }
+                })
             }
         }, delay)
     }

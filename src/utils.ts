@@ -254,7 +254,12 @@ export let aiMapForPython = [] as PythonAI[]
 // 加载 python 的 AI
 GET('http://127.0.0.1:5000/ai_list', (data) => {
     aiMapForPython = data
-    console.log(aiMapForPython)
 })
 
-
+// Python AI 的 API
+export function runPythonAi(aiIndex: number, board: number[][], current: number, newest: number[], reversal: number[][], prompt: PromptDict, callback: (piece: number[]) => void) {
+    POST('http://127.0.0.1:5000/ai_api',
+        { aiIndex, board, current, newest, reversal, prompt },
+        (data) => callback(data)
+    )
+}
