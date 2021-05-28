@@ -1,51 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Typography, Button, Space, Select, Radio } from 'antd'
 import Board from './board'
-import { countPiece, copy2dArray, download, getPromptDict, PromptDict } from '../utils'
+import { countPiece, copy2dArray, download, getPromptDict, aiMapForJs, aiMapForPython, initBoard } from '../utils'
 
 const { Paragraph, Text } = Typography
 const { Option } = Select
 
-// AI 算法映射
-const aiMap = [
-    {
-        name: "小迷糊",
-        description: "小迷糊什么都不知道, 他只会在可以下的地方随便下一个棋子.",
-        fn: function (board: number[][], current: number, newest: number[], reversal: number[][], prompt: PromptDict, callback: (piece: number[]) => void) {
-            callback(prompt.list[Math.floor(Math.random() * prompt.list.length)])
-        }
-    },
-    {
-        name: "贪心鬼",
-        description: "贪心鬼很贪婪, 他每次只会下翻转最多棋子的地方.",
-        fn: function (board: number[][], current: number, newest: number[], reversal: number[][], prompt: PromptDict, callback: (piece: number[]) => void) {
-            let max = 0
-            let index = 0
-            for (let i = 0; i < prompt.list.length; i++) {
-                if (prompt[prompt.list[i].toString()].length > max) {
-                    max = prompt[prompt.list[i].toString()].length
-                    index = i
-                }
-            }
-            callback(prompt.list[index])
-        }
-    }
-]
-
 let history = [] as number[][][]
 let historyForNewest = [] as number[][]
 let historyForReversal = [] as number[][][]
-
-let initBoard = [
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 2, 1, 0, 0, 0],
-    [0, 0, 0, 1, 2, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-]
 
 let endCount = 0
 
@@ -58,8 +21,8 @@ function AiAiGame() {
     const [delay, setDelay] = useState(500)
 
     // AI 选择
-    const [firstAiIndex, setFirstAiIndex] = useState(0)
-    const [secondAiIndex, setSecondAiIndex] = useState(0)
+    const [firstAiIndex, setFirstAiIndex] = useState(-1)
+    const [secondAiIndex, setSecondAiIndex] = useState(-1)
 
     const [newest, setNewest] = useState([-1, -1])
     const [reversal, setReversal] = useState([] as number[][])
@@ -85,7 +48,7 @@ function AiAiGame() {
                 return
             }
             // AI 选择
-            aiMap[currentPiece === 1 ? firstAiIndex : secondAiIndex]
+            aiMapForJs[currentPiece === 1 ? firstAiIndex : secondAiIndex]
                 .fn(board, currentPiece, newest, reversal, prompt, (_newest) => {
                     if (prompt) {
                         updateBoard(_newest, prompt[_newest.toString()])
@@ -99,7 +62,7 @@ function AiAiGame() {
         if (isStart) {
             emitMessageForAi()
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPiece, isStart])
 
 
@@ -157,13 +120,13 @@ function AiAiGame() {
                     <Radio.Button value={0} onClick={() => setDelay(0)} style={{ minWidth: 96 }}>无延时</Radio.Button>
                 </Radio.Group>
                 <Select defaultValue={0} value={firstAiIndex} size="large" style={{ width: 120 }} onChange={(value) => setFirstAiIndex(value)}>
-                    <Option value={0}>小迷糊</Option>
-                    <Option value={1}>贪心鬼</Option>
+                    {aiMapForJs.map((ai, index) => <Option value={-index - 1} key={-index - 1}>{ai.name}</Option>)}
+                    {aiMapForPython.map((ai, index) => <Option value={index} key={index}>{ai.name}</Option>)}
                 </Select>
                 <Text>Vs</Text>
                 <Select defaultValue={0} value={secondAiIndex} size="large" style={{ width: 120 }} onChange={(value) => setSecondAiIndex(value)}>
-                    <Option value={0}>小迷糊</Option>
-                    <Option value={1}>贪心鬼</Option>
+                    {aiMapForJs.map((ai, index) => <Option value={-index - 1} key={-index - 1}>{ai.name}</Option>)}
+                    {aiMapForPython.map((ai, index) => <Option value={index} key={index}>{ai.name}</Option>)}
                 </Select>
                 <Button onClick={downloadData} size="large" style={{ minWidth: 80 }}>
                     保存对局数据
@@ -174,7 +137,7 @@ function AiAiGame() {
                 </Radio.Group>
                 {(() => {
                     if (endCount >= 2) {
-                        
+
                         const black = countPiece(board, 1)
                         const white = countPiece(board, 2)
                         if (black === white) {
@@ -188,10 +151,10 @@ function AiAiGame() {
             <br />
             <br />
             <Paragraph>
-                {aiMap[firstAiIndex].description}
+                {firstAiIndex < 0 ? aiMapForJs[-firstAiIndex-1].description : aiMapForPython[firstAiIndex].description}
             </Paragraph>
             <Paragraph>
-                {aiMap[secondAiIndex].description}
+                {secondAiIndex < 0 ? aiMapForJs[-secondAiIndex-1].description : aiMapForPython[secondAiIndex].description}
             </Paragraph>
             <Board board={board} current={currentPiece} reversal={reversal} newest={newest}
                 isEnd={endCount >= 2} />
