@@ -4,6 +4,7 @@ import { UploadOutlined, UserOutlined, VideoCameraOutlined } from '@ant-design/i
 import PlayersGame from './component/playersGame'
 import PlayerAiGame from './component/playerAiGame'
 import Room from './component/room'
+import AiAiGame from './component/aiAiGame'
 import About from './component/about'
 import 'antd/dist/antd.css'
 import './css/App.css'
@@ -12,7 +13,7 @@ const { Header, Content, Sider } = Layout
 const { Title } = Typography
 
 const gameNameMap = ['双人对战', '人机对战', '联机对战', 'AI 对战', '说明']
-const gameMap = [<PlayersGame />, <PlayerAiGame />, <Room />, <p>建设中</p>, <About />]
+const gameMap = [<PlayersGame />, <PlayerAiGame />, <Room />, <AiAiGame />, <About />]
 
 function App() {
     const [currentGame, setCurrentGame] = useState(0)
@@ -45,7 +46,7 @@ function App() {
                 </Header>
                 <Content id="content" style={{ margin: '24px 16px 0' }}>
                     {gameMap.map((game, index) => (
-                        <div style={{display: currentGame === index ? 'block' : 'none'}}>
+                        <div key={index} style={{display: currentGame === index ? 'block' : 'none'}}>
                             {game}
                         </div>
                     ))}

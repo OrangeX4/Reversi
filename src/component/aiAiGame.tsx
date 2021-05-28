@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Typography, Button, Space, Select, Radio } from 'antd'
+import { Typography, Button, Space, Select, Radio, message } from 'antd'
 import Board from './board'
 import { countPiece, copy2dArray, download, getPromptDict, PromptDict } from '../utils'
 
@@ -14,7 +14,7 @@ const aiMap = [
         fn: function (board: number[][], current: number, newest: number[], reversal: number[][], prompt: PromptDict, callback: (piece: number[]) => void) {
             callback(prompt.list[Math.floor(Math.random() * prompt.list.length)])
         }
-    }, 
+    },
     {
         name: "贪心鬼",
         description: "贪心鬼很贪婪, 他每次只会下翻转最多棋子的地方.",
@@ -47,69 +47,62 @@ let initBoard = [
     [0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
-function PlayerAiGame() {
+let endCount = 0
 
-    // 设定谁先走
-    const [playerPiece, setPlayerPiece] = useState(1)
-    const [playerRadio, setPlayerRadio] = useState(1)
+function AiAiGame() {
 
-    // 非常麻烦的异步判断是否该 AI 下棋了
-    const [lastOne, setLastOne] = useState(-1)
-    const [isAiRunning, setIsAiRunning] = useState(false)
+    // 是否开始游戏
+    const [isStart, setIsStart] = useState(false)
 
     // 延时时间
     const [delay, setDelay] = useState(500)
 
     // AI 选择
-    const [aiIndex, setAiIndex] = useState(0)
+    const [firstAiIndex, setFirstAiIndex] = useState(0)
+    const [secondAiIndex, setSecondAiIndex] = useState(0)
 
     const [newest, setNewest] = useState([-1, -1])
     const [reversal, setReversal] = useState([] as number[][])
+    // 当前是谁下
     const [currentPiece, setCurrentPiece] = useState(1)
-
-    const [endCount, setEndCount] = useState(0)
 
     const [board, setBoard] = useState(initBoard)
 
-    function emitMessageForAi(prompt?: PromptDict) {
-        if (!prompt) {
-            prompt = getPromptDict(board, currentPiece)
-        }
+    function emitMessageForAi() {
         // 应用 AI 算法
         setTimeout(() => {
+            const prompt = getPromptDict(board, currentPiece)
             if (!prompt) {
                 return
             }
             if (prompt.list.length === 0) {
+                endCount += 1
+                console.log("endCount: " + endCount)
+                if (endCount >= 2) {
+                    message.success(((countPiece(board, 1) > countPiece(board, 2)) ? '黑' : '白') + '棋子胜利!')
+                    return
+                }
                 setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
-                setEndCount((endCount) => endCount + 1)
-                setIsAiRunning(false)
                 return
             }
-            aiMap[aiIndex].fn(board, currentPiece, newest, reversal, prompt, (_newest) => {
-                if (prompt) {
-                    updateBoard(_newest, prompt[_newest.toString()])
-                    setIsAiRunning(false)
-                    setLastOne(lastOne === 1 ? 2 : 1)
-                }
-            })
+            // AI 选择
+            aiMap[currentPiece === 1 ? firstAiIndex : secondAiIndex]
+                .fn(board, currentPiece, newest, reversal, prompt, (_newest) => {
+                    if (prompt) {
+                        updateBoard(_newest, prompt[_newest.toString()])
+                    }
+                })
         }, delay)
     }
 
+    // 在棋盘更新的时候给 AI 发送消息
     useEffect(() => {
-        // 说明玩家已经执行完毕了
-        if (!isAiRunning && lastOne === playerPiece) {
-            setIsAiRunning(true)
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [board])
-
-    useEffect(() => {
-        if (isAiRunning) {
+        if (isStart) {
             emitMessageForAi()
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAiRunning])
+    }, [currentPiece, isStart])
+
 
     function updateBoard(_newest: number[], _reversal: number[][]) {
         const newBoard = copy2dArray(board)
@@ -121,24 +114,9 @@ function PlayerAiGame() {
         setNewest(_newest)
         setReversal(_reversal)
         setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
-        setEndCount(0)
+        endCount = 0
     }
 
-
-    function handleClickPrompt(_newest: number[], _reversal: number[][]) {
-        if (_reversal.length !== 0) {
-            // 正常情况
-            if (playerPiece === currentPiece && !isAiRunning) {
-                // 轮到玩家下
-                updateBoard(_newest, _reversal)
-                setLastOne(playerPiece)
-            }
-        } else {
-            // 有一方无棋可下
-            setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
-            setEndCount((endCount) => endCount + 1)
-        }
-    }
 
     function restart() {
         history = []
@@ -147,42 +125,9 @@ function PlayerAiGame() {
         setNewest([-1, -1])
         setReversal([])
         setCurrentPiece(1)
-        setEndCount(0)
-        setPlayerPiece(playerRadio)
+        endCount = 0
         setBoard(initBoard)
-        setLastOne(-1)
-        if (playerRadio === 1) {
-            setIsAiRunning(false)
-        } else {
-            setIsAiRunning(true)
-        }
-    }
-
-    function recall() {
-        if (history.length > 2) {
-            history.pop()
-            history.pop()
-            const _board = history.pop()
-            if (_board) {
-                setBoard(_board)
-            }
-            historyForNewest.pop()
-            historyForNewest.pop()
-            const _newest = historyForNewest.pop()
-            if (_newest) {
-                setNewest(_newest)
-            }
-            historyForReversal.pop()
-            historyForReversal.pop()
-            const _reversal = historyForReversal.pop()
-            if (_reversal) {
-                setReversal(_reversal)
-            }
-            setEndCount(0)
-            if (currentPiece !== playerPiece) {
-                setCurrentPiece(playerPiece)
-            }
-        }
+        setIsStart(true)
     }
 
     // 记录对局数据
@@ -208,18 +153,16 @@ function PlayerAiGame() {
                 <Button onClick={restart} size="large" style={{ minWidth: 80 }}>
                     开始
                 </Button>
-                <Button onClick={recall} size="large" style={{ minWidth: 80 }}>
-                    悔棋
-                </Button>
-                <Radio.Group defaultValue={1} value={playerRadio} size="large">
-                    <Radio.Button value={1} onClick={() => setPlayerRadio(1)} style={{ minWidth: 96 }}>玩家先走</Radio.Button>
-                    <Radio.Button value={2} onClick={() => setPlayerRadio(2)} style={{ minWidth: 96 }}>AI 先走</Radio.Button>
-                </Radio.Group>
                 <Radio.Group defaultValue={500} value={delay} size="large">
                     <Radio.Button value={500} onClick={() => setDelay(500)} style={{ minWidth: 96 }}>有延时</Radio.Button>
                     <Radio.Button value={0} onClick={() => setDelay(0)} style={{ minWidth: 96 }}>无延时</Radio.Button>
                 </Radio.Group>
-                <Select defaultValue={0} value={aiIndex} size="large" style={{ width: 120 }} onChange={(value) => setAiIndex(value)}>
+                <Select defaultValue={0} value={firstAiIndex} size="large" style={{ width: 120 }} onChange={(value) => setFirstAiIndex(value)}>
+                    <Option value={0}>小迷糊</Option>
+                    <Option value={1}>贪心鬼</Option>
+                </Select>
+                <Text>Vs</Text>
+                <Select defaultValue={0} value={secondAiIndex} size="large" style={{ width: 120 }} onChange={(value) => setSecondAiIndex(value)}>
                     <Option value={0}>小迷糊</Option>
                     <Option value={1}>贪心鬼</Option>
                 </Select>
@@ -230,15 +173,15 @@ function PlayerAiGame() {
                     <Radio.Button value="black" style={{ minWidth: 80 }}>{`⚫ ${countPiece(board, 1)}`}</Radio.Button>
                     <Radio.Button value="white" style={{ minWidth: 80 }}>{`⚪ ${countPiece(board, 2)}`}</Radio.Button>
                 </Radio.Group>
-                {isAiRunning ? <Text type="secondary">AI 运算中...</Text> : null}
                 {(() => {
                     if (endCount >= 2) {
+                        setIsStart(false)
                         const black = countPiece(board, 1)
                         const white = countPiece(board, 2)
                         if (black === white) {
                             return <Text type="success">平局!</Text>
                         } else {
-                            return <Text type="success">{(black > white && playerPiece === 1) || (black < white && playerPiece === 2) ? '玩家' : 'AI '}胜利!</Text>
+                            return <Text type="success">{(black > white) ? '玩家' : 'AI '}胜利!</Text>
                         }
                     }
                 })()}
@@ -246,13 +189,15 @@ function PlayerAiGame() {
             <br />
             <br />
             <Paragraph>
-                {aiMap[aiIndex].description}
+                {aiMap[firstAiIndex].description}
+            </Paragraph>
+            <Paragraph>
+                {aiMap[secondAiIndex].description}
             </Paragraph>
             <Board board={board} current={currentPiece} reversal={reversal} newest={newest}
-                isEnd={endCount >= 2}
-                onClickPrompt={handleClickPrompt} />
+                isEnd={endCount >= 2} />
         </div>
     )
 }
 
-export default PlayerAiGame
+export default AiAiGame
