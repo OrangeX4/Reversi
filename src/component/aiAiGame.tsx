@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Typography, Button, Space, Select, Radio, message } from 'antd'
+import { Typography, Button, Space, Select, Radio } from 'antd'
 import Board from './board'
 import { countPiece, copy2dArray, download, getPromptDict, PromptDict } from '../utils'
 
@@ -77,9 +77,8 @@ function AiAiGame() {
             }
             if (prompt.list.length === 0) {
                 endCount += 1
-                console.log("endCount: " + endCount)
                 if (endCount >= 2) {
-                    message.success(((countPiece(board, 1) > countPiece(board, 2)) ? '黑' : '白') + '棋子胜利!')
+                    setIsStart(false)
                     return
                 }
                 setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
@@ -150,7 +149,7 @@ function AiAiGame() {
     return (
         <div className="site-layout-background" style={{ padding: 24 }}>
             <Space size="large" wrap style={{ paddingBottom: 24 }}>
-                <Button onClick={restart} size="large" style={{ minWidth: 80 }}>
+                <Button onClick={restart} size="large" style={{ minWidth: 80 }} disabled={isStart}>
                     开始
                 </Button>
                 <Radio.Group defaultValue={500} value={delay} size="large">
@@ -175,13 +174,13 @@ function AiAiGame() {
                 </Radio.Group>
                 {(() => {
                     if (endCount >= 2) {
-                        setIsStart(false)
+                        
                         const black = countPiece(board, 1)
                         const white = countPiece(board, 2)
                         if (black === white) {
                             return <Text type="success">平局!</Text>
                         } else {
-                            return <Text type="success">{(black > white) ? '玩家' : 'AI '}胜利!</Text>
+                            return <Text type="success">{(black > white) ? '黑' : '白'}棋胜利!</Text>
                         }
                     }
                 })()}
