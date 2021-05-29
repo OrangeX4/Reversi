@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Typography, Button, Space, Select, Radio } from 'antd'
+import { Typography, Button, Space, Select, Radio, message } from 'antd'
 import Board from './board'
 import { countPiece, copy2dArray, download, getPromptDict, PromptDict, aiMapForJs, aiMapForPython, initBoard, runPythonAi } from '../utils'
 
@@ -43,11 +43,19 @@ function PlayerAiGame() {
             if (!prompt) {
                 return
             }
-            // 直接跳过
+            // 无棋可下, 直接跳过
             if (prompt.list.length === 0) {
                 setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
                 setEndCount((endCount) => endCount + 1)
                 setIsAiRunning(false)
+                setLastOne(lastOne === 1 ? 2 : 1)
+                return
+            }
+            // 只有一个地方可以下, 还计算啥, 直接下就对了
+            if (prompt.list.length === 1) {
+                updateBoard(prompt.list[0], prompt[prompt.list[0].toString()])
+                setIsAiRunning(false)
+                setLastOne(lastOne === 1 ? 2 : 1)
                 return
             }
             // 判断是 js 还是 python, 使用不同的策略
@@ -90,6 +98,10 @@ function PlayerAiGame() {
 
     function updateBoard(_newest: number[], _reversal: number[][]) {
         const newBoard = copy2dArray(board)
+        if (!_reversal) {
+            message.warn('AI 出现 Bug 了!')
+            return
+        }
         newBoard[_newest[0]][_newest[1]] = currentPiece
         _reversal.forEach((piece) => {
             newBoard[piece[0]][piece[1]] = currentPiece
