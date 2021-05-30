@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Layout, Menu, Typography } from 'antd'
-import { UploadOutlined, UserOutlined, VideoCameraOutlined } from '@ant-design/icons'
+import { UserOutlined, VideoCameraOutlined } from '@ant-design/icons'
 import PlayersGame from './component/playersGame'
 import PlayerAiGame from './component/playerAiGame'
 import Room from './component/room'
@@ -32,7 +32,7 @@ function App() {
                     <Menu.Item key="2" onClick={() => { setCurrentGame(2) }} icon={<VideoCameraOutlined />}>
                         {gameNameMap[2]}
                     </Menu.Item>
-                    <Menu.Item key="3" onClick={() => { setCurrentGame(3) }} icon={<UploadOutlined />}>
+                    <Menu.Item key="3" onClick={() => { setCurrentGame(3) }} icon={<UserOutlined />}>
                         {gameNameMap[3]}
                     </Menu.Item>
                     <Menu.Item key="4" onClick={() => { setCurrentGame(4) }} icon={<UserOutlined />}>

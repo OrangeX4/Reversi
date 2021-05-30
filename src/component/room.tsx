@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Typography, Space, Radio, Form, Input, Button, message } from 'antd'
-import { countPiece, copy2dArray, download, getPromptDict, PromptDict, escapeHtml } from '../utils'
+import { countPiece, copy2dArray, download, getPromptDict, PromptDict, escapeHtml, initBoard, io } from '../utils'
 import Board from './board'
 
 const { Title, Text } = Typography
@@ -15,25 +15,23 @@ let history = [] as number[][][]
 let historyForNewest = [] as number[][]
 let historyForReversal = [] as number[][][]
 
-let initBoard = [
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 2, 1, 0, 0, 0],
-    [0, 0, 0, 1, 2, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-]
-
 function Room() {
 
     // 房间列表
-    const [roomList, setRoomList] = useState([{
-        id: 0,
-        name: '第一个房间',
-        isReady: true
-    }] as RoomType[])
+    const [roomList, setRoomList] = useState([] as RoomType[])
+
+    // 通过 socket.io 更新房间信息
+
+    useEffect(() => {
+        io.on('updateRoomList', (newRoomList: RoomType[]) => {
+            setRoomList(newRoomList)
+        })
+    }, [])
+    // 第一次启动时获取 roomList
+    useEffect(() => {
+        io.emit('updateRoomList')
+    }, [])
+
 
     // 新建房间
     const [newRoomName, setNewRoomName] = useState('')
@@ -47,51 +45,148 @@ function Room() {
             return
         } else {
             setErrorMessage('')
-            // TODO: 处理创建房间的逻辑
-            setTimeout(() => {
-                const newRoom: RoomType = {
-                    id: roomList[roomList.length - 1].id + 1,
-                    name: escapeHtml(newRoomName.trim()),
-                    isReady: false
-                }
-                receiveNewRoomMessage(newRoom.id, [...roomList, newRoom])
-            }, 200)
+            // 创建房间, 发送包含房间名的信息
+            io.emit('createRoom', escapeHtml(newRoomName.trim()))
         }
     }
+    // 接收到成功新建房间的信息时
+    useEffect(() => {
+        io.on('createRoom', (newRoomList: RoomType[]) => {
+            receiveNewRoomMessage(newRoomList[newRoomList.length - 1].id, newRoomList)
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
     function receiveNewRoomMessage(newRoomId: number, newRoomList: RoomType[]) {
         newRoomList = newRoomList.sort((a, b) => a.id - b.id)
         setRoomList(newRoomList)
         setRoomId(newRoomId)
         setIsOwner(true)
-
-        if (newRoomId !== -1) {
-            // TODO: 处理对手加入的逻辑
-            setTimeout(() => {
-                message.success('有玩家加入游戏了!')
-                setIsReady(true)
-            }, 2000)
-    
-            // TODO: 处理对手突然退出的逻辑
-            setTimeout(() => {
-                message.warn('对面玩家退出了游戏!')
-                initiate()
-                setIsRivalRunning(false)
-                setIsOwner(false)
-                setIsReady(false)
-                setIsBystander(false)
-                setPlayerPiece(1)
-                setPlayerRadio(1)
-            }, 10000)
-        }
     }
+
 
     // 在房间内的逻辑
     // 当前房间 ID
     const [roomId, setRoomId] = useState(-1)
-    // TODO: 是否观战
     const [isBystander, setIsBystander] = useState(false)
+    function observeRoom(roomId: number) {
+        io.emit('observeRoom', roomId)
+    }
+    // 收到进入消息
+    useEffect(() => {
+        io.on('observeRoom', (data) => {
+            setRoomId(data.id)
+            setIsBystander(true)
+            setIsReady(data.isReady)
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    // 收到房间已经关闭消息
+    useEffect(() => {
+        io.on('closeRoom', () => {
+            setIsBystander((isBystander) => {
+                if (isBystander) {
+                    message.warn('房主关闭了房间')
+                    setRoomId(-1)
+                    return false
+                } else {
+                    return false
+                }
+            })
+        })
+    }, [])
+
+    // 接收到更新棋盘的信息
+    useEffect(() => {
+        io.on('updateBoard', (data) => {
+            setIsBystander((isBystander) => {
+                if (isBystander) {
+                    setBoard(data.board)
+                    setNewest(data.newest)
+                    setReversal(data.reversal)
+                    setCurrentPiece(data.currentPiece)
+                    return true
+                } else {
+                    return false
+                }
+            })
+            setPlayerPiece((playerPiece) => {
+                setIsOwner((isOwner) => {
+                    if (isOwner) {
+                        if (data.currentPiece === playerPiece) {
+                            setBoard(data.board)
+                            setNewest(data.newest)
+                            setReversal(data.reversal)
+                            setCurrentPiece(data.currentPiece)
+                            setEndCount(0)
+                            setIsRivalRunning(false)
+                            setLastOne(lastOne === 1 ? 2 : 1)
+                        }
+                        return true
+                    } else {
+                        return false
+                    }
+                })
+                
+                setIsRival((isRival) => {
+                    if (isRival) {
+                        if (data.currentPiece === playerPiece) {
+                            setBoard(data.board)
+                            setNewest(data.newest)
+                            setReversal(data.reversal)
+                            setCurrentPiece(data.currentPiece)
+                            setEndCount(0)
+                            setIsRivalRunning(false)
+                            setLastOne(lastOne === 1 ? 2 : 1)
+                        }
+                        return true
+                    } else {
+                        return false
+                    }
+                })
+                return playerPiece
+            })
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     // 是否有参赛者
+    // eslint-disable-next-line
+    const [isRival, setIsRival] = useState(false)
     const [isReady, setIsReady] = useState(false)
+    // 加入已有房间的逻辑
+    function addRoom(roomId: number) {
+        io.emit('addRoom', roomId)
+        setRoomId(roomId)
+        setIsReady(true)
+        setIsRival(true)
+        setPlayerPiece(2)
+        setPlayerRadio(2)
+        setIsRivalRunning(true)
+    }
+    // 房主接收到有人加入房间的信息
+    useEffect(() => {
+        io.on('addRoom', () => {
+            setIsOwner((isOwner) => {
+                if (isOwner) {
+                    message.success('有玩家加入游戏了!')
+                    setIsReady(true)
+                    return true
+                } else {
+                    return false
+                }
+            })
+            setIsBystander((isBystander) => {
+                if (isBystander) {
+                    message.success('有玩家加入游戏了!')
+                    return true
+                } else {
+                    return false
+                }
+            })
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     // 是否房主
     const [isOwner, setIsOwner] = useState(false)
 
@@ -101,10 +196,31 @@ function Room() {
     function handleSetPlayerRadio(value: number) {
         if (isOwner) {
             setPlayerRadio(value)
+            io.emit('changePriority')
         } else {
             message.warn('只有房主才可以选择谁先下棋!')
         }
     }
+    useEffect(() => {
+        io.on('setPlayerPiece', (isOwnerFirst) => {
+            setIsRival((isRival) => {
+                if (isRival) {
+                    setPlayerPiece(isOwnerFirst ? 2 : 1)
+                    setPlayerRadio(isOwnerFirst ? 2 : 1)
+                    if (!isOwnerFirst) {
+                        setBoard(initBoard)
+                        setCurrentPiece(1)
+                        setPlayerPiece(1)
+                        setIsRivalRunning(false)
+                        message.success('轮到你下棋了!')
+                    }
+                    return true
+                } else {
+                    return false
+                }
+            })
+        })
+    }, [])
 
     // 非常麻烦的异步判断是否该对手下棋了
     const [lastOne, setLastOne] = useState(-1)
@@ -122,25 +238,33 @@ function Room() {
         if (!prompt) {
             prompt = getPromptDict(board, currentPiece)
         }
-        // TODO: 处理发送信息的逻辑
-        setTimeout(() => {
-            if (!prompt) {
-                return
-            }
-            if (prompt.list.length === 0) {
-                setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
-                setEndCount((endCount) => endCount + 1)
-                setIsRivalRunning(false)
-                return
-            }
-            // 随机
-            const _newest = prompt.list[Math.floor(Math.random() * prompt.list.length)]
-            if (prompt) {
-                updateBoard(_newest, prompt[_newest.toString()])
-                setIsRivalRunning(false)
-                setLastOne(lastOne === 1 ? 2 : 1)
-            }
-        }, 500)
+        if (!prompt) {
+            return
+        }
+        if (prompt.list.length === 0) {
+            setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
+            setEndCount((endCount) => endCount + 1)
+            setIsRivalRunning(false)
+            return
+        }
+        // setTimeout(() => {
+        //     if (!prompt) {
+        //         return
+        //     }
+        //     if (prompt.list.length === 0) {
+        //         setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
+        //         setEndCount((endCount) => endCount + 1)
+        //         setIsRivalRunning(false)
+        //         return
+        //     }
+        //     // 随机
+        //     const _newest = prompt.list[Math.floor(Math.random() * prompt.list.length)]
+        //     if (prompt) {
+        //         updateBoard(_newest, prompt[_newest.toString()])
+        //         setIsRivalRunning(false)
+        //         setLastOne(lastOne === 1 ? 2 : 1)
+        //     }
+        // }, 500)
     }
 
     useEffect(() => {
@@ -183,6 +307,12 @@ function Room() {
                 // 轮到玩家下
                 updateBoard(_newest, _reversal)
                 setLastOne(playerPiece)
+                const newBoard = copy2dArray(board)
+                newBoard[_newest[0]][_newest[1]] = currentPiece
+                _reversal.forEach((piece) => {
+                    newBoard[piece[0]][piece[1]] = currentPiece
+                })
+                io.emit('updateBoard', roomId, newBoard, _newest, _reversal, currentPiece === 1 ? 2 : 1)
             }
         } else {
             // 有一方无棋可下
@@ -201,6 +331,7 @@ function Room() {
         setCurrentPiece(1)
         setEndCount(0)
         setPlayerPiece(playerRadio)
+        io.emit('setPlayerPiece', roomId, playerRadio === 1)
         setBoard(initBoard)
         setLastOne(-1)
     }
@@ -220,18 +351,60 @@ function Room() {
 
     // 退出
     function exit() {
-        // TODO: 处理退出逻辑
-        setTimeout(() => {
-            initiate()
-            setIsRivalRunning(false)
-            setIsOwner(false)
-            setIsReady(false)
-            setIsBystander(false)
-            setPlayerPiece(1)
-            setPlayerRadio(1)
-            receiveNewRoomMessage(-1, roomList.filter((room) => room.id !== roomId))
-        }, 200)
+        // 给服务器发送退出消息
+        io.emit('exitRoom', roomId)
+        // 各种初始化
+        initiate()
+        setIsRivalRunning(false)
+        setIsOwner(false)
+        setIsRival(false)
+        setIsReady(false)
+        setIsBystander(false)
+        setPlayerPiece(1)
+        setPlayerRadio(1)
+        setRoomId(-1)
     }
+    // 接受到退出的消息
+    useEffect(() => {
+        io.on('exitRoomForOwner', () => {
+            setIsOwner((isOwner) => {
+                if (isOwner) {
+                    message.warn('对面玩家退出了游戏!')
+                    initiate()
+                    setIsRivalRunning(false)
+                    setIsRival(false)
+                    setIsReady(false)
+                    setPlayerPiece(1)
+                    setPlayerRadio(1)
+                    io.emit('setPlayerPiece', roomId, true)
+                    return true
+                } else {
+                    return false
+                }
+            })
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    useEffect(() => {
+        io.on('exitRoomForRival', () => {
+            setIsRival((isRival) => {
+                if (isRival) {
+                    message.warn('对面玩家退出了游戏!')
+                    initiate()
+                    setIsRivalRunning(false)
+                    setIsOwner(true)
+                    setIsReady(false)
+                    setPlayerPiece(1)
+                    setPlayerRadio(1)
+                    io.emit('setPlayerPiece', roomId, true)
+                    return false
+                } else {
+                    return false
+                }
+            })
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     // 记录对局数据
     useEffect(() => {
@@ -276,7 +449,7 @@ function Room() {
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                         <Text style={{ marginTop: 8 }}>当前没有任何房间, 您可以新建一个自己的房间哦!</Text>
                         <div>
-                            <Button size="large">刷新房间</Button>
+                            <Button onClick={() => io.emit('updateRoomList')} size="large">刷新房间</Button>
                         </div>
                     </div>
                 </div>
@@ -289,8 +462,8 @@ function Room() {
                             <Title level={4}>{room.name}</Title>
                             <div>
                                 <Text type={room.isReady ? "secondary" : "success"}>{room.isReady ? "游戏中" : "等待中"}</Text>
-                                <Button size="large" style={{ marginLeft: 16 }}>进入观战</Button>
-                                <Button size="large" style={{ marginLeft: 16 }} disabled={room.isReady}>加入房间</Button>
+                                <Button onClick={() => observeRoom(room.id)} size="large" style={{ marginLeft: 16 }}>进入观战</Button>
+                                <Button onClick={() => addRoom(room.id)} size="large" style={{ marginLeft: 16 }} disabled={room.isReady}>加入房间</Button>
                             </div>
                         </div>
                     </div>
@@ -319,9 +492,9 @@ function Room() {
                     </Radio.Group>
                     {isBystander ? <Text type="success">观战中...</Text> : null}
                     {!isReady ? <Text type="secondary">请耐心等待他人进入房间...</Text> : null}
-                    {isReady && !isBystander ? (isRivalRunning ? <Text type="secondary">对方正在下棋, 请耐心等待...</Text> : <Text type="secondary">轮到你下棋, 请尽快决定哦~</Text>) : null}
+                    {isReady && !isBystander && endCount < 2 ? (isRivalRunning ? <Text type="secondary">对方正在下棋, 请耐心等待...</Text> : <Text type="success">轮到你下棋, 请尽快决定哦~</Text>) : null}
                     {(() => {
-                        if (endCount >= 2) {
+                        if (endCount >= 2 && !isBystander) {
                             const black = countPiece(board, 1)
                             const white = countPiece(board, 2)
                             if (black === white) {

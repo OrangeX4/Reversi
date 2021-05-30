@@ -1,3 +1,6 @@
+import webSocket from 'socket.io-client'
+
+
 // 用于判断一个坐标是否在一个坐标列表里
 export function isIn(piece: number[], pieces: number[][]) {
     let result = false
@@ -252,14 +255,17 @@ export interface PythonAI {
 export let aiMapForPython = [] as PythonAI[]
 
 // 加载 python 的 AI
-GET('http://127.0.0.1:5000/ai_list', (data) => {
+GET('http://192.168.43.137:5000/ai_list', (data) => {
     aiMapForPython = data
 })
 
 // Python AI 的 API
 export function runPythonAi(aiIndex: number, board: number[][], current: number, newest: number[], reversal: number[][], prompt: PromptDict, callback: (piece: number[]) => void) {
-    POST('http://127.0.0.1:5000/ai_api',
+    POST('http://192.168.43.137:5000/ai_api',
         { aiIndex, board, current, newest, reversal, prompt },
         (data) => callback(data)
     )
 }
+
+// 加载 socket.io
+export const io = webSocket('http://192.168.43.137:7686')
