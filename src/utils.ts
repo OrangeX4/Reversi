@@ -246,26 +246,16 @@ export function POST(url: string, data: any, onSuccess?: (data: any) => void) {
     }
 }
 
-// python 的 AI 结构
-export interface PythonAI {
-    name: string
-    description: string
-}
-
-export let aiMapForPython = [] as PythonAI[]
-
-// 加载 python 的 AI
-GET('http://192.168.43.137:5000/ai_list', (data) => {
-    aiMapForPython = data
-})
+// 获取 Python AI list 的网址
+export const pythonAiListUrl = 'http://1.15.246.22:7685/ai_list'
 
 // Python AI 的 API
 export function runPythonAi(aiIndex: number, board: number[][], current: number, newest: number[], reversal: number[][], prompt: PromptDict, callback: (piece: number[]) => void) {
-    POST('http://192.168.43.137:5000/ai_api',
+    POST('http://1.15.246.22:7685/ai_api',
         { aiIndex, board, current, newest, reversal, prompt },
         (data) => callback(data)
     )
 }
 
 // 加载 socket.io
-export const io = webSocket('http://192.168.43.137:7686')
+export const io = webSocket('http://1.15.246.22:7686')

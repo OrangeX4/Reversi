@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Typography, Button, Space, Select, Radio, message } from 'antd'
 import Board from './board'
-import { countPiece, copy2dArray, download, getPromptDict, PromptDict, aiMapForJs, aiMapForPython, initBoard, runPythonAi } from '../utils'
+import { countPiece, copy2dArray, download, getPromptDict, PromptDict, aiMapForJs, GET, pythonAiListUrl, initBoard, runPythonAi } from '../utils'
 
 const { Paragraph, Text } = Typography
 const { Option } = Select
@@ -10,7 +10,23 @@ let history = [] as number[][][]
 let historyForNewest = [] as number[][]
 let historyForReversal = [] as number[][][]
 
+// python 的 AI 结构
+interface PythonAI {
+    name: string
+    description: string
+}
+
 function PlayerAiGame() {
+    
+    // 初始化 AI
+    const [aiMapForPython, setAiMapForPython] = useState([] as PythonAI[])
+    
+    // 加载 python 的 AI
+    useEffect(() => {
+        GET(pythonAiListUrl, (data) => {
+            setAiMapForPython(data)
+        })
+    }, [])
 
     // 设定谁先走
     const [playerPiece, setPlayerPiece] = useState(1)
