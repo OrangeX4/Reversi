@@ -1,46 +1,66 @@
-# Getting Started with Create React App
+# Reversi 黑白棋 (前端部分)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## [在线网址](http://1.15.246.22/)
 
-## Available Scripts
+## 实现功能
 
-In the project directory, you can run:
+### 双人对战
 
-### `yarn start`
+拥有基本的黑白棋游戏判断逻辑, 和简洁的界面显示.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+用于在一台设备上自娱自乐 (并不.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+并且可以保存对局数据, 便于后续分析.
 
-### `yarn test`
+![](https://pic3.58cdn.com.cn/nowater/webim/big/n_v2df668e13f633489a8f44f8a411eede7c.png)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 人机对战
 
-### `yarn build`
+通过前后端分离的设计, 前端用前端全家桶实现, 后端使用 Python 语言, 便于整合黑白棋 AI 算法.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+目前已经有数位小伙伴把 AI 放到这里了!
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+比如杰哥, czz 和阿伟.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+![](https://pic3.58cdn.com.cn/nowater/webim/big/n_v2e4655e504a00402f9de661bceaaceeb9.png)
 
-### `yarn eject`
+### 联机对战
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+经过好几天的奋斗, 终于加入了联机功能!
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+虽然实现的不是很优雅, 但是支持十个对局的 "高 (di) 并发" 应该没问题??
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+![](https://pic3.58cdn.com.cn/nowater/webim/big/n_v2ae48e8a6900a4683a7c4f32cdf723635.png)
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### AI 对战
 
-## Learn More
+我们可以让 AI 打 AI!
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+这样就能快乐地以可视化的方式看 AI 打架了.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+(虽然服务器可能撑不住...)
+
+![](https://pic3.58cdn.com.cn/nowater/webim/big/n_v295f23e78561d40628166b05ebd847ea1.png)
+
+
+## 使用技术
+
+- 前端必备三个基础知识: HTML + CSS + JS
+- 前端框架: React (React Hook + Typescript)
+- 组件库: Ant Design
+
+
+## 自行部署
+
+1. 安装 [NodeJS](https://nodejs.org/en/);
+2. 安装 Yarn: `npm install yarn -g`;
+3. Clone 该仓库: `git clone https://github.com/OrangeX4/Reversi-Front.git`;
+4. 终端进入该仓库, 运行 `yarn start` 进入代码热更新开发模式;
+5. 运行 `yarn build` 生成静态文件;
+6. 修改 `src\utils.ts` 文件下的 url 地址, 以适配你的后端.
+
+
+## [后端](https://github.com/OrangeX4/Reversi-Back)
+
+
+
