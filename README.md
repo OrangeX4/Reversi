@@ -64,7 +64,7 @@
 5. 运行 `yarn build` 生成静态文件;
 6. 修改 `src\utils.ts` 文件下的 url 地址, 以适配你的后端.
 
-### [后端](https://github.com/OrangeX4/Reversi-Back)
+### 后端: [https://github.com/OrangeX4/Reversi-Back](https://github.com/OrangeX4/Reversi-Back)
 
 
 ## 3. 黑白棋 AI
