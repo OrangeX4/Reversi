@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Typography, Button, Space, Select, Radio, message } from 'antd'
 import Board from './board'
-import { countPiece, copy2dArray, download, getPromptDict, PromptDict, aiMapForJs, GET, pythonAiListUrl, initBoard, runPythonAi } from '../utils'
+import { countPiece, copy2dArray, download, getPrompt, getPromptDict, PromptDict, aiMapForJs, GET, pythonAiListUrl, initBoard, runPythonAi } from '../utils'
 
 const { Paragraph, Text } = Typography
 const { Option } = Select
@@ -10,6 +10,8 @@ let history = [] as number[][][]
 let historyForNewest = [] as number[][]
 let historyForReversal = [] as number[][][]
 
+let lastOne = -1
+
 // python 的 AI 结构
 interface PythonAI {
     name: string
@@ -17,10 +19,10 @@ interface PythonAI {
 }
 
 function PlayerAiGame() {
-    
+
     // 初始化 AI
     const [aiMapForPython, setAiMapForPython] = useState([] as PythonAI[])
-    
+
     // 加载 python 的 AI
     useEffect(() => {
         GET(pythonAiListUrl, (data) => {
@@ -33,7 +35,6 @@ function PlayerAiGame() {
     const [playerRadio, setPlayerRadio] = useState(1)
 
     // 非常麻烦的异步判断是否该 AI 下棋了
-    const [lastOne, setLastOne] = useState(-1)
     const [isAiRunning, setIsAiRunning] = useState(false)
 
     // 延时时间
@@ -64,33 +65,29 @@ function PlayerAiGame() {
                 setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
                 setEndCount((endCount) => endCount + 1)
                 setIsAiRunning(false)
-                setLastOne(lastOne === 1 ? 2 : 1)
+                lastOne = lastOne === 1 ? 2 : 1
                 return
             }
             // 只有一个地方可以下, 还计算啥, 直接下就对了
             if (prompt.list.length === 1) {
-                updateBoard(prompt.list[0], prompt[prompt.list[0].toString()])
+                updateBoardForAi(prompt.list[0], prompt[prompt.list[0].toString()])
                 setIsAiRunning(false)
-                setLastOne(lastOne === 1 ? 2 : 1)
+                lastOne = lastOne === 1 ? 2 : 1
                 return
             }
             // 判断是 js 还是 python, 使用不同的策略
             if (aiIndex < 0) {
                 // 对 JS 的 AI
-                aiMapForJs[-aiIndex-1].fn(board, currentPiece, newest, reversal, prompt, (_newest) => {
+                aiMapForJs[-aiIndex - 1].fn(board, currentPiece, newest, reversal, prompt, (_newest) => {
                     if (prompt) {
-                        updateBoard(_newest, prompt[_newest.toString()])
-                        setIsAiRunning(false)
-                        setLastOne(lastOne === 1 ? 2 : 1)
+                        updateBoardForAi(_newest, prompt[_newest.toString()])
                     }
                 })
             } else {
                 // 对 Python 的 AI
                 runPythonAi(aiIndex, board, currentPiece, newest, reversal, prompt, (_newest) => {
                     if (prompt) {
-                        updateBoard(_newest, prompt[_newest.toString()])
-                        setIsAiRunning(false)
-                        setLastOne(lastOne === 1 ? 2 : 1)
+                        updateBoardForAi(_newest, prompt[_newest.toString()])
                     }
                 })
             }
@@ -112,36 +109,82 @@ function PlayerAiGame() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAiRunning])
 
-    function updateBoard(_newest: number[], _reversal: number[][]) {
-        const newBoard = copy2dArray(board)
+    function updateBoardForAi(_newest: number[], _reversal: number[][]) {
         if (!_reversal) {
             message.warn('AI 出现 Bug 了!')
             return
         }
+
+        // 正常情况
+        const newBoard = copy2dArray(board)
         newBoard[_newest[0]][_newest[1]] = currentPiece
         _reversal.forEach((piece) => {
             newBoard[piece[0]][piece[1]] = currentPiece
         })
+
+        
+        if (getPrompt(newBoard, currentPiece === 1 ? 2 : 1).length === 0) {
+            if (getPrompt(newBoard, currentPiece).length === 0) {
+                // 自己也无棋可下， 结束
+                setEndCount(2)
+                setBoard(newBoard)
+                setNewest(_newest)
+                setReversal(_reversal)
+                setEndCount(0)
+                return
+            } else {
+                // 自己可以下, 再次调用
+                setEndCount(1)
+                lastOne = playerPiece
+                setIsAiRunning(false)
+                setBoard(newBoard)
+                setNewest(_newest)
+                setReversal(_reversal)
+                setEndCount(0)
+                return
+            }
+        }
         setBoard(newBoard)
         setNewest(_newest)
         setReversal(_reversal)
-        setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
         setEndCount(0)
+        
+        // 对方无棋可下
+        
+        setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
+        setIsAiRunning(false)
+        lastOne = lastOne === 1 ? 2 : 1
     }
 
 
     function handleClickPrompt(_newest: number[], _reversal: number[][]) {
-        if (_reversal.length !== 0) {
+        if (playerPiece === currentPiece && !isAiRunning) {
+            // 轮到玩家下
             // 正常情况
-            if (playerPiece === currentPiece && !isAiRunning) {
-                // 轮到玩家下
-                updateBoard(_newest, _reversal)
-                setLastOne(playerPiece)
+            const newBoard = copy2dArray(board)
+            newBoard[_newest[0]][_newest[1]] = currentPiece
+            _reversal.forEach((piece) => {
+                newBoard[piece[0]][piece[1]] = currentPiece
+            })
+            setBoard(newBoard)
+            setNewest(_newest)
+            setReversal(_reversal)
+            setEndCount(0)
+
+            // 对方无棋可下
+            if (getPrompt(newBoard, currentPiece === 1 ? 2 : 1).length === 0) {
+                if (getPrompt(newBoard, currentPiece).length === 0) {
+                    // 自己也无棋可下， 结束
+                    setEndCount(2)
+                    return
+                } else {
+                    // 自己可以下, 直接返回
+                    setEndCount(1)
+                    return
+                }
             }
-        } else {
-            // 有一方无棋可下
             setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
-            setEndCount((endCount) => endCount + 1)
+            lastOne = playerPiece
         }
     }
 
@@ -155,7 +198,7 @@ function PlayerAiGame() {
         setEndCount(0)
         setPlayerPiece(playerRadio)
         setBoard(initBoard)
-        setLastOne(-1)
+        lastOne = -1
         if (playerRadio === 1) {
             setIsAiRunning(false)
         } else {
@@ -225,7 +268,7 @@ function PlayerAiGame() {
                     <Radio.Button value={0} onClick={() => setDelay(0)} style={{ minWidth: 96 }}>无延时</Radio.Button>
                 </Radio.Group>
                 <Select defaultValue={-1} value={aiIndex} size="large" style={{ width: 120 }} onChange={(value) => setAiIndex(value)}>
-                    {aiMapForJs.map((ai, index) => <Option value={-index-1} key={-index-1}>{ai.name}</Option>)}
+                    {aiMapForJs.map((ai, index) => <Option value={-index - 1} key={-index - 1}>{ai.name}</Option>)}
                     {aiMapForPython.map((ai, index) => <Option value={index} key={index}>{ai.name}</Option>)}
                 </Select>
                 <Button onClick={downloadData} size="large" style={{ minWidth: 80 }}>
@@ -251,7 +294,7 @@ function PlayerAiGame() {
             <br />
             <br />
             <Paragraph>
-                {aiIndex < 0 ? aiMapForJs[-aiIndex-1].description : aiMapForPython[aiIndex].description}
+                {aiIndex < 0 ? aiMapForJs[-aiIndex - 1].description : aiMapForPython[aiIndex].description}
             </Paragraph>
             <Board board={board} current={currentPiece} reversal={reversal} newest={newest}
                 isEnd={endCount >= 2}

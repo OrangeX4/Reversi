@@ -101,7 +101,8 @@ function AiAiGame() {
     function updateBoard(_newest: number[], _reversal: number[][]) {
         const newBoard = copy2dArray(board)
         if (!_reversal) {
-            message.warn('AI 出现 Bug 了!')
+            console.log('newest:' + _newest.toString())
+            message.warn('AI 出现 Bug 了! AI 想下 ' + _newest.toString() + '位置.')
             return
         }
         newBoard[_newest[0]][_newest[1]] = currentPiece

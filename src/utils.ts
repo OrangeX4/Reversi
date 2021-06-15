@@ -214,6 +214,18 @@ export const initBoard = [
     [0, 0, 0, 0, 0, 0, 0, 0],
 ]
 
+// export const initBoard = [
+//     [0, 0, 0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0, 0, 0],
+//     [0, 0, 0, 0, 0, 0, 2, 0],
+//     [0, 0, 0, 0, 0, 0, 0, 2],
+//     [0, 0, 0, 0, 0, 1, 2, 0],
+// ]
+
+
 
 export function GET(url: string, onSuccess?: (data: any) => void) {
     const httpRequest = new XMLHttpRequest()
@@ -248,6 +260,7 @@ export function POST(url: string, data: any, onSuccess?: (data: any) => void) {
 
 // 获取 Python AI list 的网址
 export const pythonAiListUrl = 'http://1.15.246.22:7685/ai_list'
+// export const pythonAiListUrl = 'http://127.0.0.1:7685/ai_list'
 
 // Python AI 的 API
 export function runPythonAi(aiIndex: number, board: number[][], current: number, newest: number[], reversal: number[][], prompt: PromptDict, callback: (piece: number[]) => void) {
