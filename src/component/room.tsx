@@ -126,7 +126,7 @@ function Room() {
                         return false
                     }
                 })
-                
+
                 setIsRival((isRival) => {
                     if (isRival) {
                         if (data.currentPiece === playerPiece) {
@@ -233,6 +233,20 @@ function Room() {
     const [endCount, setEndCount] = useState(0)
 
     const [board, setBoard] = useState(initBoard)
+
+    // 计时器
+    const [timeCount, setTimeCount] = useState(0)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeCount(c => c + 1)
+        }, 1000)
+        return () => clearInterval(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    // 棋盘更新时更新计数
+    useEffect(() => {
+        setTimeCount(0)
+    }, [board])
 
     function emitMessageForRival(prompt?: PromptDict) {
         if (!prompt) {
@@ -502,6 +516,8 @@ function Room() {
                             } else {
                                 return <Text type="success">{(black > white && playerPiece === 1) || (black < white && playerPiece === 2) ? '玩家' : '对手'}胜利!</Text>
                             }
+                        } else {
+                            return <Text type="success">等待时间: {timeCount} 秒</Text>
                         }
                     })()}
                 </Space>

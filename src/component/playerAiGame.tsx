@@ -51,6 +51,20 @@ function PlayerAiGame() {
 
     const [board, setBoard] = useState(initBoard)
 
+    // 计时器
+    const [timeCount, setTimeCount] = useState(0)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeCount(c => c + 1)
+        }, 1000)
+        return () => clearInterval(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    // 棋盘更新时更新计数
+    useEffect(() => {
+        setTimeCount(0)
+    }, [board])
+
     function emitMessageForAi(prompt?: PromptDict) {
         if (!prompt) {
             prompt = getPromptDict(board, currentPiece)
@@ -122,7 +136,7 @@ function PlayerAiGame() {
             newBoard[piece[0]][piece[1]] = currentPiece
         })
 
-        
+
         if (getPrompt(newBoard, currentPiece === 1 ? 2 : 1).length === 0) {
             if (getPrompt(newBoard, currentPiece).length === 0) {
                 // 自己也无棋可下， 结束
@@ -148,9 +162,9 @@ function PlayerAiGame() {
         setNewest(_newest)
         setReversal(_reversal)
         setEndCount(0)
-        
+
         // 对方无棋可下
-        
+
         setCurrentPiece((currentPiece) => currentPiece === 1 ? 2 : 1)
         setIsAiRunning(false)
         lastOne = lastOne === 1 ? 2 : 1
@@ -279,18 +293,22 @@ function PlayerAiGame() {
                     <Radio.Button value="white" style={{ minWidth: 80 }}>{`⚪ ${countPiece(board, 2)}`}</Radio.Button>
                 </Radio.Group>
                 {isAiRunning ? <Text type="secondary">AI 运算中...</Text> : null}
-                {(() => {
-                    if (endCount >= 2) {
-                        const black = countPiece(board, 1)
-                        const white = countPiece(board, 2)
-                        if (black === white) {
-                            return <Text type="success">平局!</Text>
-                        } else {
-                            return <Text type="success">{(black > white && playerPiece === 1) || (black < white && playerPiece === 2) ? '玩家' : 'AI '}胜利!</Text>
-                        }
-                    }
-                })()}
             </Space>
+            <br />
+            <br />
+            {(() => {
+                if (endCount >= 2) {
+                    const black = countPiece(board, 1)
+                    const white = countPiece(board, 2)
+                    if (black === white) {
+                        return <Text type="success">平局!</Text>
+                    } else {
+                        return <Text type="success">{(black > white && playerPiece === 1) || (black < white && playerPiece === 2) ? '玩家' : 'AI '}胜利!</Text>
+                    }
+                } else {
+                    return <Text type="success">等待时间: {timeCount} 秒</Text>
+                }
+            })()}
             <br />
             <br />
             <Paragraph>

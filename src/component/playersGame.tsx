@@ -18,6 +18,20 @@ function PlayersGame() {
 
     const [board, setBoard] = useState(initBoard)
 
+    // 计时器
+    const [timeCount, setTimeCount] = useState(0)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeCount(c => c + 1)
+        }, 1000)
+        return () => clearInterval(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    // 棋盘更新时更新计数
+    useEffect(() => {
+        setTimeCount(0)
+    }, [board])
+
     function restart() {
         history = []
         historyForNewest = []
@@ -94,6 +108,8 @@ function PlayersGame() {
                         } else {
                             return <Text type="success">{black > white ? '黑' : '白'}棋胜利!</Text>
                         }
+                    } else {
+                        return <Text type="success">等待时间: {timeCount} 秒</Text>
                     }
                 })()}
             </Space>
@@ -110,7 +126,7 @@ function PlayersGame() {
                     setNewest(_newest)
                     setReversal(_reversal)
                     setEndCount(0)
-                    
+
                     // 对方无棋可下
                     if (getPrompt(newBoard, currentPiece === 1 ? 2 : 1).length === 0) {
                         if (getPrompt(newBoard, currentPiece).length === 0) {

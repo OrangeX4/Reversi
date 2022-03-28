@@ -19,10 +19,11 @@ interface PythonAI {
 }
 
 function AiAiGame() {
-    
+
+
     // 初始化 AI
     const [aiMapForPython, setAiMapForPython] = useState([] as PythonAI[])
-    
+
     // 加载 python 的 AI
     useEffect(() => {
         GET(pythonAiListUrl, (data) => {
@@ -46,6 +47,20 @@ function AiAiGame() {
     const [currentPiece, setCurrentPiece] = useState(1)
 
     const [board, setBoard] = useState(initBoard)
+
+    // 计时器
+    const [timeCount, setTimeCount] = useState(0)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeCount(c => c + 1)
+        }, 1000)
+        return () => clearInterval(timer)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    // 棋盘更新时更新计数
+    useEffect(() => {
+        setTimeCount(0)
+    }, [board])
 
     function emitMessageForAi() {
         // 应用 AI 算法
@@ -182,6 +197,8 @@ function AiAiGame() {
                         } else {
                             return <Text type="success">{(black > white) ? '黑' : '白'}棋胜利!</Text>
                         }
+                    } else {
+                        return <Text type="success">等待时间: {timeCount} 秒</Text>
                     }
                 })()}
             </Space>
