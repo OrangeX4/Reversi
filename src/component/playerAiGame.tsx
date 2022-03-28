@@ -117,8 +117,12 @@ function PlayerAiGame() {
     }, [board])
 
     useEffect(() => {
-        if (isAiRunning) {
-            emitMessageForAi()
+        if (currentPiece !== playerPiece) {
+          if (isAiRunning) {
+              emitMessageForAi()
+          }
+        } else {
+          setIsAiRunning(false)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isAiRunning])
